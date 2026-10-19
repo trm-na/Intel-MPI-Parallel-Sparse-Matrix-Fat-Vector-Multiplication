@@ -1,0 +1,71 @@
+#!/bin/bash
+
+##
+## PBS submission script used to run MPI performance tests on
+## Cranfield University's CR2 HPC system.
+##
+## Adapted from the MPI PBS submission template provided by
+## Cranfield University ("MPI-sub2022v1").
+##
+## This script is environment-specific. PBS options, queue names,
+## module paths, MPI settings and network interfaces may need to
+## be changed before running it on another HPC system.
+##
+
+#PBS -N trm_nnz_wise
+#PBS -l select=4:ncpus=16:mpiprocs=16
+#PBS -q half_hour
+
+## Email notifications are disabled in the public version.
+#PBS -m n
+
+#PBS -j oe
+#PBS -W sandbox=PRIVATE
+#PBS -k n
+
+## Create a symbolic link to the job's private sandbox.
+ln -s $PWD $PBS_O_WORKDIR/$PBS_JOBID
+
+## Change to the directory from which the job was submitted.
+cd $PBS_O_WORKDIR
+
+## Calculate the number of allocated CPUs.
+export cpus=`cat $PBS_NODEFILE | wc -l`
+
+## Create a hostfile containing the allocated compute nodes.
+sort -u $PBS_NODEFILE -o mpi_nodes.$$
+
+## Intel MPI configuration for Cranfield CR2.
+export I_MPI_HYDRA_IFACE=ib0
+export I_MPI_HYDRA_BOOTSTRAP=ssh
+export I_MPI_HYDRA_RMK=pbs
+
+## Debug options. Enable only when required.
+## export I_MPI_HYDRA_DEBUG=1
+## export I_MPI_DEBUG=6
+## export I_MPI_DEBUG_OUTPUT=%h-%r-%p-debug.out
+
+## Load the application environment.
+module use /apps/modules/all
+module load intel/2021b
+
+## Ensure that the output directory exists.
+mkdir -p ./Results
+
+## Strong scalability tests, choose the method between row_wise, column_wise and nnz_wise.
+for i in 1 2 3
+do
+  for j in 2 4 8 16 32 48 64
+  do
+    mpirun -genvall -hostfile mpi_nodes.$$ -np ${j} ./nnz_wise matrices_${i}.txt > ./Results/nnz-wise_${i}_${j}.txt
+  done
+done
+
+## Weak scalability tests, choose the method between row_wise, column_wise and nnz_wise.
+## for i in 2 4 8 16 32 48 64
+## do
+##   mpirun -genvall -hostfile mpi_nodes.$$ -np ${i} ./column_wise matrices_ws_${i}.txt > ./Results/column-wise_ws_${i}.txt
+## done
+
+## Remove temporary files created for this job.
+rm $PBS_O_WORKDIR/$PBS_JOBID
