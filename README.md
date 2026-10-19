@@ -103,6 +103,11 @@ CAUTION FOR CR2. When running the algorithms compiled with the Intel module when
 
 As additional files, the matrices used to test the code are included, as well as a Python script that automatically checks if all the generated solutions from the parallelised implementations match the serial implementation solution.
 
+
+## Acknowledgements
+
+Some functions included in this project are based on the code submitted to different Stack Overflow posts by the user Jonathan Dursi (https://stackoverflow.com/users/463827/jonathan-dursi).
+
 <hr>
 
 This code is my submission for Cranfield University's High Performance Technical Computing module assignment for the MSc in Computational and Software Techniques in Engineering - Computational Intelligence for Data Analytics.
